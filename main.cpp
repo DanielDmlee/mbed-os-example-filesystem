@@ -1,4 +1,4 @@
-/* mbed Microcontroller Library
+/* m Microcontroller Library
  * Copyright (c) 2006-2013 ARM Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,19 +19,28 @@
 
 #include "BlockDevice.h"
 
-// File systems
+// This will take the system's default block device
+//BlockDevice *bd = BlockDevice::get_default_instance();
+
+// Instead of the default block device, you can define your own block device.
+// For example: HeapBlockDevice with size of 2048 bytes, read size 1, write size 1 and erase size 512.
+#include "HeapBlockDevice.h"
+BlockDevice *bd = new HeapBlockDevice(2048, 1, 1, 512);
+
+
+// This example uses LittleFileSystem as the default file system
 #include "LittleFileSystem.h"
-#include "FATFileSystem.h"
-
-
-BlockDevice *bd = BlockDevice::get_default_instance();
-
-// File system declaration
 LittleFileSystem fs("fs");
 
+// Uncomment the following two lines and comment the previous two to use FAT file system.
+// #include "FATFileSystem.h"
+// FATFileSystem fs("fs");
 
+#if 0
 // Set up the button to trigger an erase
 InterruptIn irq(BUTTON1);
+#endif
+
 void erase() {
     printf("Initializing the block device... ");
     fflush(stdout);
@@ -65,7 +74,7 @@ int main() {
 
     // Setup the erase event on button press, use the event queue
     // to avoid running in interrupt context
-    irq.fall(mbed_event_queue()->event(erase));
+//    irq.fall(mbed_event_queue()->event(erase));
 
     // Try to mount the filesystem
     printf("Mounting the filesystem... ");
@@ -84,6 +93,8 @@ int main() {
         }
     }
 
+    int Num=5;
+    int i;
     // Open the numbers file
     printf("Opening \"/fs/numbers.txt\"... ");
     fflush(stdout);
@@ -99,17 +110,18 @@ int main() {
             error("error: %s (%d)\n", strerror(errno), -errno);
         }
 
-        for (int i = 0; i < 10; i++) {
-            printf("\rWriting numbers (%d/%d)... ", i, 10);
+        for (i = 0; i < Num; i++) {
+            printf("\rWriting numbers (%d/%d)... ", i, Num);
             fflush(stdout);
             err = fprintf(f, "    %d\n", i);
             if (err < 0) {
                 printf("Fail :(\n");
                 error("error: %s (%d)\n", strerror(errno), -errno);
-            }
+           }
         }
-        printf("\rWriting numbers (%d/%d)... OK\n", 10, 10);
-
+        printf("\rWriting numbers (%d/%d)... OK\n", i, Num);
+    }
+#if 0
         printf("Seeking file... ");
         fflush(stdout);
         err = fseek(f, 0, SEEK_SET);
@@ -118,10 +130,10 @@ int main() {
             error("error: %s (%d)\n", strerror(errno), -errno);
         }
     }
-
+    
     // Go through and increment the numbers
-    for (int i = 0; i < 10; i++) {
-        printf("\rIncrementing numbers (%d/%d)... ", i, 10);
+    for (i = 0; i < Num; i++) {
+        printf("\rIncrementing numbers (%d/%d)... ", i, Num);
         fflush(stdout);
 
         // Get current stream position
@@ -141,8 +153,7 @@ int main() {
         // Flush between write and read on same file
         fflush(f);
     }
-    printf("\rIncrementing numbers (%d/%d)... OK\n", 10, 10);
-
+    printf("\rIncrementing numbers (%d/%d)... OK\n", i, Num);
     // Close the file which also flushes any cached writes
     printf("Closing \"/fs/numbers.txt\"... ");
     fflush(stdout);
@@ -151,7 +162,7 @@ int main() {
     if (err < 0) {
         error("error: %s (%d)\n", strerror(errno), -errno);
     }
-    
+#endif 
     // Display the root directory
     printf("Opening the root directory... ");
     fflush(stdout);
@@ -210,7 +221,6 @@ int main() {
     if (err < 0) {
         error("error: %s (%d)\n", strerror(-err), err);
     }
-        
     printf("Mbed OS filesystem example done!\n");
 }
 
